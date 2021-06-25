@@ -23,6 +23,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import ImagePicker from 'react-native-image-crop-picker';
 
+import {_validateEmail, _validateNIN, _addUser} from '../../api/users';
+
 import {Colors} from '../constants/colors';
 
 import {styles} from '../styles/registration';
@@ -30,23 +32,25 @@ import {styles} from '../styles/registration';
 export default function Registration({closePopUp}) {
   const [profileImage, setProfileImage] = useState('');
   const [name, setName] = useState('');
-  const [NIN, setNIN] = useState('')
+  const [NIN, setNIN] = useState('');
   const [address, setAddress] = useState('');
-  const [email, setEmail] = useState('')
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [number, setNumber] = useState('');
 
   const [isNameValid, setIsNameValid] = useState(false);
-  const [isNINValid, setIsNINValid] = useState(false)
+  const [isNINValid, setIsNINValid] = useState(false);
   const [isAddressValid, setIsAddressValid] = useState(false);
-  const [isEmailValid, setIsEmailValid] = useState(false)
+  const [isEmailValid, setIsEmailValid] = useState(false);
   const [isNumberValid, setIsNumberValid] = useState(false);
 
   const [nameErrMsg, setNameErrMsg] = useState('');
-  const [NINErrMsg, setNINErrMsg] = useState('')
+  const [NINErrMsg, setNINErrMsg] = useState('');
   const [addressErrMsg, setAddressErrMsg] = useState('');
   const [emailErrMsg, setEmailErrMsg] = useState('');
   const [numberErrMsg, setNumberErrMsg] = useState('');
 
+  const [isValidatingEmail, setIsValidatingEmail] = useState(false);
+  const [isValidatingNIN, setIsValidatingNIN] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isSelectingProfileImage, setIsSelectingProfileImage] = useState(false);
 
@@ -191,11 +195,11 @@ export default function Registration({closePopUp}) {
     }
   };
 
-  const addNIN = NIN => {
-    setNIN(NIN);
-    if (NIN.trim() && NIN.match(/^[a-z ,.'-]+$/i)) {
-      setIsNINValid(true);
-      setNINErrMsg('');
+  const addNIN = nin => {
+    setNIN(nin);
+    if (nin.trim() && nin.length === 11 && nin.match(/^[0-9]*$/)) {
+      setIsValidatingNIN(true);
+      _validateNIN(nin, {setIsNINValid, setNINErrMsg, setIsValidatingNIN});
     } else {
       setIsNINValid(false);
     }
@@ -213,16 +217,25 @@ export default function Registration({closePopUp}) {
 
   const addEmail = email => {
     setEmail(email);
-    if (email.trim()) {
-      setIsEmailValid(true);
-      setEmailErrMsg('');
+    if (
+      email.trim() &&
+      email.match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      )
+    ) {
+      setIsValidatingEmail(true);
+      _validateEmail(email, {
+        setIsEmailValid,
+        setEmailErrMsg,
+        setIsValidatingEmail,
+      });
     } else {
       setIsEmailValid(false);
     }
   };
 
   const addNumber = num => {
-    setPhoneNumber(num.trim());
+    setNumber(num.trim());
     if (
       num.trim().length >= 10 &&
       num.match(/^[+]*[(]{0,1}[0-9]{1,3}[)]{0,1}[-\s\./0-9]*$/g)
@@ -247,8 +260,8 @@ export default function Registration({closePopUp}) {
     }
   };
 
-   const validateNIN = () => {
-    if (NIN.trim()) {
+  const validateNIN = () => {
+    if (NIN.trim() && NIN.length === 11 && NIN.match(/^[0-9]*$/)) {
       setNINErrMsg('');
     } else {
       setIsNINValid(false);
@@ -271,8 +284,13 @@ export default function Registration({closePopUp}) {
     }
   };
 
-   const validateEmail = () => {
-    if (email.trim()) {
+  const validateEmail = () => {
+    if (
+      email.trim() &&
+      email.match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      )
+    ) {
       setEmailErrMsg('');
     } else {
       setIsEmailValid(false);
@@ -286,13 +304,13 @@ export default function Registration({closePopUp}) {
 
   const validateNumber = () => {
     if (
-      phoneNumber.trim().length >= 10 &&
-      phoneNumber.match(/^[+]*[(]{0,1}[0-9]{1,3}[)]{0,1}[-\s\./0-9]*$/g)
+      number.trim().length >= 10 &&
+      number.match(/^[+]*[(]{0,1}[0-9]{1,3}[)]{0,1}[-\s\./0-9]*$/g)
     ) {
       setNumberErrMsg('');
     } else {
       setIsNumberValid(false);
-      if (!phoneNumber.trim()) {
+      if (!number.trim()) {
         setNumberErrMsg('Phone Number is required');
       } else {
         setNumberErrMsg('Invalid Phone Number.');
@@ -300,12 +318,20 @@ export default function Registration({closePopUp}) {
     }
   };
 
-  const createProfile = () => {
+  const createProfile = async () => {
     setIsCreating(true);
-    setTimeout(() => {
-      setIsCreating(false);
-      hideContainer();
-    }, 1500);
+
+    _addUser(
+      {
+        name,
+        address,
+        email,
+        NIN,
+        number,
+      },
+      setIsCreating,
+      hideContainer,
+    );
   };
 
   //Functions Below Render Components Conditionally
@@ -395,7 +421,11 @@ export default function Registration({closePopUp}) {
               style={styles.inputField}
               returnKeyType="go"
               onSubmitEditing={
-                isNameValid && isAddressValid && isEmailValid && isNINValid && isNumberValid
+                isNameValid &&
+                isAddressValid &&
+                isEmailValid &&
+                isNINValid &&
+                isNumberValid
                   ? createProfile
                   : null
               }
@@ -434,7 +464,11 @@ export default function Registration({closePopUp}) {
               style={styles.inputField}
               returnKeyType="go"
               onSubmitEditing={
-               isNameValid && isAddressValid && isEmailValid && isNINValid && isNumberValid
+                isNameValid &&
+                isAddressValid &&
+                isEmailValid &&
+                isNINValid &&
+                isNumberValid
                   ? createProfile
                   : null
               }
@@ -448,7 +482,7 @@ export default function Registration({closePopUp}) {
           ) : null}
         </View>
 
-         {/* Email */}
+        {/* Email */}
         <View style={styles.fieldContainer}>
           <View
             style={{
@@ -466,20 +500,42 @@ export default function Registration({closePopUp}) {
               placeholder="Email Address"
               placeholderTextColor="#ccc"
               maxLength={100}
-              onChangeText={email=> addEmail(email)}
+              onChangeText={email => addEmail(email)}
               onBlur={validateEmail}
               value={email}
               style={styles.inputField}
               returnKeyType="go"
               onSubmitEditing={
-                isNameValid && isAddressValid && isEmailValid && isNINValid && isNumberValid
+                isNameValid &&
+                isAddressValid &&
+                isEmailValid &&
+                isNINValid &&
+                isNumberValid
                   ? createProfile
                   : null
               }
               selectTextOnFocus
             />
 
-            {renderValidationIcons(email, isEmailValid)}
+            {isValidatingEmail ? (
+              <ActivityIndicator color={Colors.secondary} size="small" />
+            ) : email ? (
+              isEmailValid ? (
+                <Icon
+                  name="check"
+                  color="#22cc22"
+                  size={Dimensions.get('screen').width / 20}
+                  style={{marginRight: 10}}
+                />
+              ) : (
+                <Icon
+                  name="close"
+                  color="#b3001e"
+                  size={Dimensions.get('screen').width / 20}
+                  style={{marginRight: 10}}
+                />
+              )
+            ) : null}
           </View>
           {emailErrMsg ? (
             <Text style={styles.errorMsg}>{emailErrMsg}</Text>
@@ -488,14 +544,14 @@ export default function Registration({closePopUp}) {
 
         {/* NIN */}
 
-         <View style={styles.fieldContainer}>
+        <View style={styles.fieldContainer}>
           <View
             style={{
               ...styles.inputFieldContainer,
               borderBottomColor: NINErrMsg ? '#b3001e' : Colors.secondary,
             }}>
             <Icon
-              name="mail-outline"
+              name="person-outline"
               type="ionicon"
               color={NINErrMsg ? '#b3001e' : Colors.secondary}
               size={Dimensions.get('screen').width / 20}
@@ -504,26 +560,46 @@ export default function Registration({closePopUp}) {
             <TextInput
               placeholder="National Identification Number(NIN)"
               placeholderTextColor="#ccc"
-              maxLength={100}
-              onChangeText={email => addNIN(email)}
+              maxLength={11}
+              onChangeText={nin => addNIN(nin)}
               onBlur={validateNIN}
               value={NIN}
               style={styles.inputField}
               returnKeyType="go"
               onSubmitEditing={
-                isNameValid && isAddressValid && isEmailValid && isNINValid && isNumberValid
+                isNameValid &&
+                isAddressValid &&
+                isEmailValid &&
+                isNINValid &&
+                isNumberValid
                   ? createProfile
                   : null
               }
-              keyboardType='number-pad'
+              keyboardType="numeric"
               selectTextOnFocus
             />
 
-            {renderValidationIcons(NIN, isNINValid)}
+            {isValidatingNIN ? (
+              <ActivityIndicator color={Colors.secondary} size="small" />
+            ) : NIN ? (
+              isNINValid ? (
+                <Icon
+                  name="check"
+                  color="#22cc22"
+                  size={Dimensions.get('screen').width / 20}
+                  style={{marginRight: 10}}
+                />
+              ) : (
+                <Icon
+                  name="close"
+                  color="#b3001e"
+                  size={Dimensions.get('screen').width / 20}
+                  style={{marginRight: 10}}
+                />
+              )
+            ) : null}
           </View>
-          {NINErrMsg ? (
-            <Text style={styles.errorMsg}>{NINErrMsg}</Text>
-          ) : null}
+          {NINErrMsg ? <Text style={styles.errorMsg}>{NINErrMsg}</Text> : null}
         </View>
 
         {/* Phone Number */}
@@ -545,11 +621,15 @@ export default function Registration({closePopUp}) {
               maxLength={15}
               onChangeText={num => addNumber(num)}
               onBlur={validateNumber}
-              value={phoneNumber}
+              value={number}
               style={styles.inputField}
               returnKeyType="go"
               onSubmitEditing={
-                isNameValid && isAddressValid && isEmailValid && isNINValid && isNumberValid
+                isNameValid &&
+                isAddressValid &&
+                isEmailValid &&
+                isNINValid &&
+                isNumberValid
                   ? createProfile
                   : null
               }
@@ -557,7 +637,7 @@ export default function Registration({closePopUp}) {
               textContentType="telephoneNumber"
               selectTextOnFocus
             />
-            {renderValidationIcons(phoneNumber, isNumberValid)}
+            {renderValidationIcons(number, isNumberValid)}
           </View>
           {numberErrMsg ? (
             <Text style={styles.errorMsg}>{numberErrMsg}</Text>
@@ -572,7 +652,11 @@ export default function Registration({closePopUp}) {
         ) : (
           <TouchableOpacity
             onPress={
-              isNameValid && isAddressValid && isEmailValid && isNINValid && isNumberValid
+              isNameValid &&
+              isAddressValid &&
+              isEmailValid &&
+              isNINValid &&
+              isNumberValid
                 ? createProfile
                 : Keyboard.dismiss
             }>
@@ -580,7 +664,11 @@ export default function Registration({closePopUp}) {
               style={{
                 ...styles.signUp,
                 color:
-                  isNameValid && isAddressValid && isEmailValid && isNINValid && isNumberValid
+                  isNameValid &&
+                  isAddressValid &&
+                  isEmailValid &&
+                  isNINValid &&
+                  isNumberValid
                     ? Colors.secondary
                     : 'grey',
               }}>

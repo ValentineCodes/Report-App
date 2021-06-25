@@ -35,8 +35,8 @@ export default function Contacts({onRender, setIsContactsVisible}) {
     return {
       width: `${size.value}%`,
       height: `${size.value}%`,
-      borderTopRightRadius: radius.value,
-      borderBottomRightRadius: radius.value,
+      borderTopLeftRadius: radius.value,
+      borderBottomLeftRadius: radius.value,
     };
   });
 
@@ -94,10 +94,12 @@ export default function Contacts({onRender, setIsContactsVisible}) {
       <View style={styles.header}>
         <TouchableOpacity activeOpacity={0.5} onPress={hideContacts}>
           <Icon
-            name="chevron-left"
+            name="chevron-down-outline"
+            type="ionicon"
             color={Colors.secondary}
             reverseColor="white"
             size={screenWidth / 10}
+            style={{transform: [{rotateZ: '-25deg'}]}}
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Emergency Contacts</Text>

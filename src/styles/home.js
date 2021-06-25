@@ -30,9 +30,19 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: screenWidth / 13,
   },
-  showMyLocationButton: {
+  chatButton: {
     position: 'absolute',
     bottom: screenWidth / 2,
+    right: 10,
+  },
+  myLocationButton: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+  },
+  callButton: {
+    position: 'absolute',
+    bottom: 10,
     right: 10,
   },
 });

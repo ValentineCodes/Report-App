@@ -28,30 +28,30 @@ export default function Header({showContacts, showProfile, showMyLocation}) {
           />
         </TouchableOpacity>
       </View> */}
-      <TouchableOpacity onPress={() => showContacts()}>
+      {/* <TouchableOpacity onPress={() => showContacts()}>
         <Icon
           name="call-outline"
           type="ionicon"
           color="rgba(255,255,255,0.7)"
         />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* Middle */}
-      <Text style={styles.logo}>ALERT</Text>
+      <Text style={styles.logo}>REPORT</Text>
 
       {/* Right */}
-      {/* <View style={styles.iconsContainer}> */}
-      {/* Notifications */}
-      {/* <TouchableOpacity>
+      <View style={styles.iconsContainer}>
+        {/* Notifications */}
+        <TouchableOpacity>
           <Icon
-            name="notifications-outline"
+            name="chatbox-outline"
             type="ionicon"
-            color="rgba(255,255,255,0.7)"
+            color="rgba(255,255,255,0.8)"
           />
-        </TouchableOpacity> */}
+        </TouchableOpacity>
 
-      {/* Profile Image */}
-      {/* <TouchableOpacity
+        {/* Profile Image */}
+        <TouchableOpacity
           onPress={() => showProfile(true)}
           style={styles.profilePicContainer}>
           <Image
@@ -59,16 +59,15 @@ export default function Header({showContacts, showProfile, showMyLocation}) {
             style={styles.profilePic}
           />
         </TouchableOpacity>
-        
-      </View> */}
-      <TouchableOpacity
+      </View>
+      {/* <TouchableOpacity
         onPress={() => showProfile(true)}
         style={styles.profilePicContainer}>
         <Image
           source={require('../images/image.jpg')}
           style={styles.profilePic}
         />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }
@@ -88,7 +87,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '22%',
+    width: '26%',
   },
   logo: {
     fontSize: 23,

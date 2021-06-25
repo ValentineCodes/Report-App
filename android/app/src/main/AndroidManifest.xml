@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="com.alert">
+  package="com.report">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -14,14 +14,12 @@
       android:icon="@mipmap/ic_launcher"
       android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
-      android:theme="@style/AppTheme"
-      android:requestLegacyExternalStorage="true">
+      android:theme="@style/AppTheme">
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
         android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
         android:launchMode="singleTask"
-        android:screenOrientation="portrait"
         android:windowSoftInputMode="adjustResize">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
@@ -31,6 +29,6 @@
       <meta-data
         android:name="com.google.android.geo.API_KEY"
         android:value="AIzaSyAn2KbGFT4yDvq0rYlDvFg2HFJF4woQHdo"/>
-        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
+      <uses-library android:name="org.apache.http.legacy" android:required="false"/>
     </application>
 </manifest>

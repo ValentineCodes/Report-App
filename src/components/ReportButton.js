@@ -51,20 +51,14 @@ export default function ReportButton({reportCrime, isReporting, isReported}) {
       <TouchableOpacity onPress={reportCrime} activeOpacity={0.8}>
         <Animated.View
           style={[
-            {
-              ...styles.button,
-              backgroundColor:
-                !isReporting && isReported ? '#b3001e' : 'rgba(0,8,51, 1)',
-            },
+            {...styles.button, display: isReported ? 'none' : 'flex'},
             animatedButtonStyle,
           ]}>
           {/* Toggle Loading Indicator */}
           {isReporting ? (
             <ActivityIndicator animating={true} color="white" size="large" />
           ) : (
-            <Text style={styles.text}>
-              {isReported ? 'Reported' : 'Report'}
-            </Text>
+            <Text style={styles.text}>Report</Text>
           )}
         </Animated.View>
       </TouchableOpacity>

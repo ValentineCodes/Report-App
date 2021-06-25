@@ -18,6 +18,7 @@ export const styles = StyleSheet.create({
     elevation: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,8,51, 1)',
   },
   text: {
     color: 'white',

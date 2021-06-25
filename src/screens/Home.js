@@ -8,12 +8,14 @@ import {
   BackHandler,
   Image,
   ToastAndroid,
+  KeyboardAvoidingView,
 } from 'react-native';
 
-import LocationEnabler from 'react-native-location-enabler';
 import GetLocation from 'react-native-get-location';
 import MapView, {Marker} from 'react-native-maps';
 import {Icon} from 'react-native-elements';
+
+import {_sendReport} from '../../api/reports';
 
 import Header from '../components/Header';
 import ReportButton from '../components/ReportButton';
@@ -22,15 +24,10 @@ import {Colors} from '../constants/colors';
 
 import Contacts from './Contacts';
 import Profile from './Profile';
-import ReportDescription from './ReportDescription';
+import Chat from './Chat';
 
 import {mapStyle} from '../styles/map';
 import {styles} from '../styles/home';
-
-const {
-  PRIORITIES: {HIGH_ACCURACY},
-  useLocationSettings,
-} = LocationEnabler;
 
 //Function declarations to show and hide Contacts and Profile Screen
 //To be defined from the Contacts Screen Component
@@ -67,6 +64,10 @@ export default function Home() {
         setUserLocation({
           latitude: location.latitude,
           longitude: location.longitude,
+        });
+        _sendReport('uyegfqoieyr', {
+          lat: location.latitude,
+          long: location.longitude,
         });
         if (_map.current) {
           _map.current.animateCamera(
@@ -232,14 +233,30 @@ export default function Home() {
       {/* Icon to animate to my location */}
       <TouchableOpacity
         onPress={showMyLocation}
-        style={styles.showMyLocationButton}>
+        style={styles.myLocationButton}>
         <Icon
           reverse
           name="street-view"
           type="font-awesome"
-          color="rgba(255,255,255,0.8)"
+          color="rgba(255,255,255,0.7)"
           reverseColor={Colors.secondary}
           size={Dimensions.get('screen').width / 14}
+          style={{display: isReported ? 'none' : 'flex'}}
+        />
+      </TouchableOpacity>
+
+      {/* Emergency Call Button */}
+      <TouchableOpacity
+        onPress={() => showContacts()}
+        style={styles.callButton}>
+        <Icon
+          reverse
+          name="call"
+          type="ionicon"
+          color="rgba(255,255,255,0.7)"
+          reverseColor={Colors.secondary}
+          size={Dimensions.get('screen').width / 14}
+          style={{display: isReported ? 'none' : 'flex'}}
         />
       </TouchableOpacity>
 
@@ -253,7 +270,7 @@ export default function Home() {
       {/* Components below are rendered above the screen */}
 
       {/* Crime details popup - This pops up after crime has been reported successfully */}
-      {isReported ? <ReportDescription closePopUp={setIsReported} /> : null}
+      {isReported ? <Chat closePopUp={setIsReported} /> : null}
 
       {/* Emergency Contact */}
 

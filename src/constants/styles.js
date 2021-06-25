@@ -1,5 +1,6 @@
 import {StyleSheet, Dimensions} from 'react-native';
 import {Colors} from './colors';
+const screenWidth = Dimensions.get('screen').width;
 
 export const styles = StyleSheet.create({
   overallContainer: {
@@ -10,7 +11,7 @@ export const styles = StyleSheet.create({
     elevation: 5,
   },
   container: {
-    width: Dimensions.get('screen').width / 1.25,
+    width: screenWidth / 1.25,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     paddingVertical: 10,
@@ -66,12 +67,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   recordTime: {
-    fontSize: Dimensions.get('screen').width / 20,
+    fontSize: screenWidth / 20,
     color: 'white',
   },
   imageContainer: {
-    width: Dimensions.get('screen').width / 5,
-    height: Dimensions.get('screen').width / 5,
+    width: screenWidth / 5,
+    height: screenWidth / 5,
     marginRight: 10,
     backgroundColor: 'white',
     margin: 5,
@@ -89,8 +90,8 @@ export const styles = StyleSheet.create({
     right: -10,
   },
   videoContainer: {
-    width: Dimensions.get('screen').width / 5,
-    height: Dimensions.get('screen').width / 5,
+    width: screenWidth / 5,
+    height: screenWidth / 5,
     backgroundColor: 'black',
   },
   filePopUpContainer: {

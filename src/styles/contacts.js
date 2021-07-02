@@ -3,13 +3,14 @@ import {StyleSheet, Dimensions} from 'react-native';
 import {Colors} from '../constants/colors';
 
 const screenWidth = Dimensions.get('screen').width;
+const screenHeight = Dimensions.get('screen').height;
 
 export const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     backgroundColor: Colors.primary,
-    bottom: 0,
-    right: 0,
+    width: screenWidth,
+    height: screenHeight,
   },
   header: {
     flexDirection: 'row',

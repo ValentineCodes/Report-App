@@ -40,34 +40,34 @@ export default function Header({showContacts, showProfile, showMyLocation}) {
       <Text style={styles.logo}>REPORT</Text>
 
       {/* Right */}
-      <View style={styles.iconsContainer}>
-        {/* Notifications */}
-        <TouchableOpacity>
+      {/* <View style={styles.iconsContainer}> */}
+      {/* Notifications */}
+      {/* <TouchableOpacity>
           <Icon
             name="chatbox-outline"
             type="ionicon"
             color="rgba(255,255,255,0.8)"
           />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
-        {/* Profile Image */}
-        <TouchableOpacity
+      {/* Profile Image */}
+      {/* <TouchableOpacity
           onPress={() => showProfile(true)}
           style={styles.profilePicContainer}>
           <Image
-            source={require('../images/image.jpg')}
+            source={require('../../assets/images/image.jpg')}
             style={styles.profilePic}
           />
         </TouchableOpacity>
-      </View>
-      {/* <TouchableOpacity
+      </View> */}
+      <TouchableOpacity
         onPress={() => showProfile(true)}
         style={styles.profilePicContainer}>
         <Image
-          source={require('../images/image.jpg')}
+          source={require('../../assets/images/image.jpg')}
           style={styles.profilePic}
         />
-      </TouchableOpacity> */}
+      </TouchableOpacity>
     </View>
   );
 }

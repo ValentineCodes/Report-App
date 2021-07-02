@@ -23,6 +23,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import {Icon} from 'react-native-elements';
 import ImagePicker from 'react-native-image-crop-picker';
+import {useSelector, useDispatch} from 'react-redux';
+import uuid from 'react-native-uuid';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import {_sendMsg} from '../../api/chats';
+
+import SentMsg from '../components/SentMsg';
+import ReceivedMsg from '../components/ReceivedMsg';
 
 import {Colors} from '../constants/colors';
 
@@ -31,11 +39,17 @@ import {styles} from '../styles/chat';
 export default function Chat({closePopUp}) {
   const screenHeight = Dimensions.get('screen').height;
   const screenWidth = Dimensions.get('screen').width;
+
+  const chatMsgs = useSelector(state => state.chatMsgs);
+  const chatID = useSelector(state => state.chatID);
+  const dispatch = useDispatch();
+
+  const [chatExpanded, setChatExpanded] = useState(false);
+  const [msg, setMsg] = useState('');
+
   const containerPosition = useSharedValue(screenHeight - 80);
   const containerWidth = useSharedValue(screenWidth / 1.1);
   const containerHeight = useSharedValue(80);
-
-  const [chatExpanded, setChatExpanded] = useState(false);
 
   const animatedContainerPosition = useAnimatedStyle(() => {
     return {
@@ -62,7 +76,12 @@ export default function Chat({closePopUp}) {
       duration: 500,
     });
 
-    setTimeout(() => closePopUp(false), 400);
+    setTimeout(() => {
+      dispatch({
+        type: 'clearMsgs',
+      });
+      closePopUp(false);
+    }, 400);
     return true;
   };
 
@@ -92,11 +111,43 @@ export default function Chat({closePopUp}) {
     setChatExpanded(false);
   };
 
+  const updateMsg = payload => {
+    dispatch({
+      type: 'updateMsg',
+      payload,
+    });
+  };
+
+  const sendMsg = () => {
+    setMsg('');
+
+    let id = uuid.v4();
+
+    if (msg.trim() !== '') {
+      // Store message in redux store
+      dispatch({
+        type: 'addMsg',
+        payload: {
+          id,
+          msg,
+          timestamp: '',
+          status: '!sent',
+          sender: 'user',
+        },
+      });
+
+      // Send message to firebase firestore
+      _sendMsg(chatID, id, msg, updateMsg);
+    }
+  };
+
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
       hideContainer,
     );
+
+    // Show chat container when rendered on the home screen
     showContainer();
     return () => {
       backHandler.remove();
@@ -108,15 +159,13 @@ export default function Chat({closePopUp}) {
       <Animated.View style={[animatedContainerPosition, animatedContainerSize]}>
         <TouchableOpacity style={styles.container} activeOpacity={1}>
           <ImageBackground
-            source={require('../images/chat_bg_img1.jpg')}
+            source={require('../../assets/images/chat_bg_img1.jpg')}
             style={{width: '100%', height: '100%'}}>
             {/* Header */}
             <View style={styles.header}>
               <View>
                 <Text style={styles.chatTitle}>Crime Reported!!!</Text>
-                <Text style={styles.chatInfo}>
-                  Chat with us..(expires in an hour)
-                </Text>
+                <Text style={styles.chatInfo}>Chat with us</Text>
               </View>
 
               {/* location */}
@@ -144,7 +193,15 @@ export default function Chat({closePopUp}) {
             </View>
 
             {/* Messages */}
-            <ScrollView style={{flex: 1}}></ScrollView>
+            <ScrollView style={{flex: 1}}>
+              {chatMsgs.map(message =>
+                message.status == 'received' ? (
+                  <ReceivedMsg key={message.id} msg={message} />
+                ) : (
+                  <SentMsg key={message.id} msg={message} />
+                ),
+              )}
+            </ScrollView>
 
             {/* TextInput Field */}
             <View style={styles.footer}>
@@ -153,6 +210,8 @@ export default function Chat({closePopUp}) {
                   multiline
                   autoFocus
                   placeholder="Type a message"
+                  value={msg}
+                  onChangeText={txt => setMsg(txt)}
                   style={styles.inputField}
                 />
                 <Icon
@@ -164,7 +223,10 @@ export default function Chat({closePopUp}) {
                 />
               </View>
 
-              <TouchableOpacity activeOpacity={0.5} style={{marginRight: -5}}>
+              <TouchableOpacity
+                onPress={sendMsg}
+                activeOpacity={0.5}
+                style={{marginRight: -5}}>
                 <Icon
                   reverse
                   name="paper-plane-outline"

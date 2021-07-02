@@ -1,4 +1,5 @@
 import firestore from '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const _validateEmail = (email, onValidateEnd) => {
   firestore()
@@ -15,7 +16,7 @@ export const _validateEmail = (email, onValidateEnd) => {
       }
       onValidateEnd.setIsValidatingEmail(false);
     })
-    .catch(err => console.log(err));
+    .catch(err => alert('Registation Failed!. Must be your Data Connection'));
 };
 
 export const _validateNIN = (NIN, onValidateEnd) => {
@@ -33,7 +34,7 @@ export const _validateNIN = (NIN, onValidateEnd) => {
       }
       onValidateEnd.setIsValidatingNIN(false);
     })
-    .catch(err => console.log(err));
+    .catch(err => alert('NIN Validation Failed!. Please try again.'));
 };
 
 export const _addUser = (user, setIsCreating, hideContainer) => {
@@ -47,14 +48,53 @@ export const _addUser = (user, setIsCreating, hideContainer) => {
       number: user.number,
       joinedOn: firestore.FieldValue.serverTimestamp(),
     })
-    .then(snapshot => snapshot.get())
-    .then(user => {
-      console.log(user);
-      setIsCreating(false);
-      hideContainer();
+    .then(snapshot => snapshot.id)
+    .then(userID => {
+      // Save user id
+      AsyncStorage.setItem('user_ID', userID)
+        .then(res => {
+          setIsCreating(false);
+          // Remove Registeration Screen
+          hideContainer();
+        })
+        .catch(err => {
+          return;
+        });
     })
     .catch(err => {
-      console.log('Registration Failed!. Must be your Data Connection:::', err);
+      alert('Registration Failed!. Must be your Data Connection:::');
       setIsCreating(false);
+    });
+};
+
+export const _updateUser = (user, onUpdate) => {
+  // Get user id
+  AsyncStorage.getItem('user_ID')
+    .then(userID => {
+      // Update User Profile
+      firestore()
+        .collection('users')
+        .doc(userID)
+        .update({
+          name: user.name,
+          address: user.address,
+          email: user.email,
+          number: user.number,
+        })
+        .then(res => {
+          onUpdate.setIsUpdating(false);
+          onUpdate.setIsEditing(false);
+          onUpdate.hideContainer();
+          onUpdate.dispatch({
+            type: 'addProfile',
+            payload: {profileImage: '', ...user},
+          });
+        })
+        .catch(err => {
+          return;
+        });
+    })
+    .catch(err => {
+      return;
     });
 };

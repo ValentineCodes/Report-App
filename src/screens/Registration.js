@@ -11,6 +11,7 @@ import {
   PermissionsAndroid,
   Keyboard,
   ScrollView,
+  ToastAndroid,
 } from 'react-native';
 
 import {Icon} from 'react-native-elements';
@@ -22,6 +23,7 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 import ImagePicker from 'react-native-image-crop-picker';
+import {useDispatch} from 'react-redux';
 
 import {_validateEmail, _validateNIN, _addUser} from '../../api/users';
 
@@ -29,7 +31,11 @@ import {Colors} from '../constants/colors';
 
 import {styles} from '../styles/registration';
 
+const screenWidth = Dimensions.get('screen').width;
+
 export default function Registration({closePopUp}) {
+  const dispatch = useDispatch();
+
   const [profileImage, setProfileImage] = useState('');
   const [name, setName] = useState('');
   const [NIN, setNIN] = useState('');
@@ -87,6 +93,17 @@ export default function Registration({closePopUp}) {
   const hideContainer = () => {
     containerPosition.value = withTiming(screenHeight - 80, {
       duration: 500,
+    });
+
+    dispatch({
+      type: 'addProfile',
+      payload: {
+        profileImage,
+        name,
+        address,
+        email,
+        number,
+      },
     });
 
     setTimeout(closePopUp, 400);
@@ -147,13 +164,13 @@ export default function Registration({closePopUp}) {
             }
           })
           .catch(err => {
-            console.log(err);
+            return;
           });
       } else {
-        console.log('Denied');
+        return;
       }
     } catch (err) {
-      console.log(err);
+      return;
     }
   };
 
@@ -343,7 +360,7 @@ export default function Registration({closePopUp}) {
           <Icon
             name="check"
             color="#22cc22"
-            size={Dimensions.get('screen').width / 20}
+            size={screenWidth / 20}
             style={{marginRight: 10}}
           />
         );
@@ -352,7 +369,7 @@ export default function Registration({closePopUp}) {
           <Icon
             name="close"
             color="#b3001e"
-            size={Dimensions.get('screen').width / 20}
+            size={screenWidth / 20}
             style={{marginRight: 10}}
           />
         );
@@ -379,7 +396,7 @@ export default function Registration({closePopUp}) {
           <Image
             source={
               !profileImage
-                ? require('../images/default_profile_pic.png')
+                ? require('../../assets/images/default_profile_pic.png')
                 : {uri: profileImage.uri}
             }
             style={styles.profileImage}
@@ -392,7 +409,7 @@ export default function Registration({closePopUp}) {
               name="camera-outline"
               type="ionicon"
               color={Colors.secondaryTransparent}
-              size={Dimensions.get('screen').width / 28}
+              size={screenWidth / 28}
             />
           </TouchableOpacity>
         </View>
@@ -408,7 +425,7 @@ export default function Registration({closePopUp}) {
               name="person-outline"
               type="ionicon"
               color={nameErrMsg ? '#b3001e' : Colors.secondary}
-              size={Dimensions.get('screen').width / 20}
+              size={screenWidth / 20}
             />
 
             <TextInput
@@ -450,7 +467,7 @@ export default function Registration({closePopUp}) {
               name="location-outline"
               type="ionicon"
               color={addressErrMsg ? '#b3001e' : Colors.secondary}
-              size={Dimensions.get('screen').width / 20}
+              size={screenWidth / 20}
             />
 
             <TextInput
@@ -493,14 +510,21 @@ export default function Registration({closePopUp}) {
               name="mail-outline"
               type="ionicon"
               color={emailErrMsg ? '#b3001e' : Colors.secondary}
-              size={Dimensions.get('screen').width / 20}
+              size={screenWidth / 20}
             />
 
             <TextInput
               placeholder="Email Address"
               placeholderTextColor="#ccc"
               maxLength={100}
-              onChangeText={email => addEmail(email)}
+              onChangeText={email =>
+                isValidatingEmail
+                  ? ToastAndroid.show(
+                      'Cannot edit value until validation is complete. Careful Next Time!',
+                      ToastAndroid.LONG,
+                    )
+                  : addEmail(email)
+              }
               onBlur={validateEmail}
               value={email}
               style={styles.inputField}
@@ -524,14 +548,14 @@ export default function Registration({closePopUp}) {
                 <Icon
                   name="check"
                   color="#22cc22"
-                  size={Dimensions.get('screen').width / 20}
+                  size={screenWidth / 20}
                   style={{marginRight: 10}}
                 />
               ) : (
                 <Icon
                   name="close"
                   color="#b3001e"
-                  size={Dimensions.get('screen').width / 20}
+                  size={screenWidth / 20}
                   style={{marginRight: 10}}
                 />
               )
@@ -554,14 +578,21 @@ export default function Registration({closePopUp}) {
               name="person-outline"
               type="ionicon"
               color={NINErrMsg ? '#b3001e' : Colors.secondary}
-              size={Dimensions.get('screen').width / 20}
+              size={screenWidth / 20}
             />
 
             <TextInput
               placeholder="National Identification Number(NIN)"
               placeholderTextColor="#ccc"
               maxLength={11}
-              onChangeText={nin => addNIN(nin)}
+              onChangeText={nin =>
+                isValidatingNIN
+                  ? ToastAndroid.show(
+                      'Cannot edit value until validation is complete. Careful Next Time!',
+                      ToastAndroid.LONG,
+                    )
+                  : addNIN(nin)
+              }
               onBlur={validateNIN}
               value={NIN}
               style={styles.inputField}
@@ -586,14 +617,14 @@ export default function Registration({closePopUp}) {
                 <Icon
                   name="check"
                   color="#22cc22"
-                  size={Dimensions.get('screen').width / 20}
+                  size={screenWidth / 20}
                   style={{marginRight: 10}}
                 />
               ) : (
                 <Icon
                   name="close"
                   color="#b3001e"
-                  size={Dimensions.get('screen').width / 20}
+                  size={screenWidth / 20}
                   style={{marginRight: 10}}
                 />
               )
@@ -613,7 +644,7 @@ export default function Registration({closePopUp}) {
               name="call-outline"
               type="ionicon"
               color={numberErrMsg ? '#b3001e' : Colors.secondary}
-              size={Dimensions.get('screen').width / 20}
+              size={screenWidth / 20}
             />
             <TextInput
               placeholder="Phone Number/Emergency Contact"

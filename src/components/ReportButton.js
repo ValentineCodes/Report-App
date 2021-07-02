@@ -14,24 +14,24 @@ import Animated, {
   withRepeat,
   cancelAnimation,
 } from 'react-native-reanimated';
+import {Icon} from 'react-native-elements';
 
 import {styles} from '../styles/reportButton';
 
 export default function ReportButton({reportCrime, isReporting, isReported}) {
   const initialButtonSize = Dimensions.get('screen').width / 2.1;
 
-  const buttonSize = useSharedValue(initialButtonSize);
+  const buttonScale = useSharedValue(0.9);
 
   const animatedButtonStyle = useAnimatedStyle(() => {
     return {
-      width: buttonSize.value,
-      height: buttonSize.value,
+      transform: [{scale: buttonScale.value}],
     };
   });
 
   const animateButton = () => {
-    buttonSize.value = withRepeat(
-      withTiming(initialButtonSize + 15, {
+    buttonScale.value = withRepeat(
+      withTiming(1, {
         duration: 1500,
       }),
       10000,
@@ -43,12 +43,12 @@ export default function ReportButton({reportCrime, isReporting, isReported}) {
     animateButton();
 
     return () => {
-      cancelAnimation(buttonSize);
+      cancelAnimation(buttonScale);
     };
   }, []);
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={reportCrime} activeOpacity={0.8}>
+      <TouchableOpacity onLongPress={reportCrime} activeOpacity={0.8}>
         <Animated.View
           style={[
             {...styles.button, display: isReported ? 'none' : 'flex'},
@@ -58,7 +58,7 @@ export default function ReportButton({reportCrime, isReporting, isReported}) {
           {isReporting ? (
             <ActivityIndicator animating={true} color="white" size="large" />
           ) : (
-            <Text style={styles.text}>Report</Text>
+            <Icon name="radio-outline" type="ionicon" size={50} color="red" />
           )}
         </Animated.View>
       </TouchableOpacity>

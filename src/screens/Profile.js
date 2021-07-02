@@ -6,15 +6,12 @@ import {
   TextInput,
   Dimensions,
   Image,
-  Alert,
-  StyleSheet,
   ActivityIndicator,
   PermissionsAndroid,
   BackHandler,
   Keyboard,
+  ToastAndroid,
 } from 'react-native';
-
-import {Icon} from 'react-native-elements';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,32 +19,43 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import ImagePicker from 'react-native-image-crop-picker';
+import {Icon} from 'react-native-elements';
+import {useSelector, useDispatch} from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import {_validateEmail, _updateUser} from '../../api/users';
 
 import {Colors} from '../constants/colors';
 
 import {styles} from '../styles/profile';
 
+const screenWidth = Dimensions.get('screen').width;
+const screenHeight = Dimensions.get('screen').height;
+
 export default function Profile({showProfile}) {
-  const [profileImage, setProfileImage] = useState('');
-  const [name, setName] = useState('Valentine Orga');
-  const [location, setLocation] = useState(
-    'Big Chuck Hostel(RM C7) at Kingdom Hall',
-  );
-  const [phoneNumber, setPhoneNumber] = useState('09071903678');
+  const profile = useSelector(state => state.profile);
+  const dispatch = useDispatch();
+
+  const [profileImage, setProfileImage] = useState(profile.profileImage);
+  const [name, setName] = useState(profile.name);
+  const [address, setAddress] = useState(profile.address);
+  const [email, setEmail] = useState(profile.email);
+  const [number, setNumber] = useState(profile.number);
 
   const [isNameValid, setIsNameValid] = useState(true);
-  const [isLocationValid, setIsLocationValid] = useState(true);
+  const [isAddressValid, setIsAddressValid] = useState(true);
+  const [isEmailValid, setIsEmailValid] = useState(true);
   const [isNumberValid, setIsNumberValid] = useState(true);
 
   const [nameErrMsg, setNameErrMsg] = useState('');
-  const [locationErrMsg, setLocationErrMsg] = useState('');
+  const [addressErrMsg, setAddressErrMsg] = useState('');
+  const [emailErrMsg, setEmailErrMsg] = useState('');
   const [numberErrMsg, setNumberErrMsg] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [isValidatingEmail, setIsValidatingEmail] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSelectingProfileImage, setIsSelectingProfileImage] = useState(false);
-
-  const screenHeight = Dimensions.get('screen').height;
 
   const initialPosition = -(screenHeight / 2.5);
 
@@ -73,9 +81,8 @@ export default function Profile({showProfile}) {
   });
 
   const showContainer = () => {
-    position.value = withSpring(screenHeight / 7, {
-      damping: 6,
-      stiffness: 10,
+    position.value = withTiming(screenHeight / 7, {
+      duration: 1000,
     });
   };
 
@@ -192,18 +199,41 @@ export default function Profile({showProfile}) {
     }
   }
 
-  const addLocation = location => {
-    setLocation(location);
-    if (location.trim()) {
-      setIsLocationValid(true);
-      setLocationErrMsg('');
+  const addAddress = address => {
+    setAddress(address);
+    if (address.trim()) {
+      setIsAddressValid(true);
+      setAddressErrMsg('');
     } else {
-      setIsLocationValid(false);
+      setIsAddressValid(false);
+    }
+  };
+
+  const addEmail = email => {
+    setEmail(email);
+    if (
+      email.trim() &&
+      email.match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      )
+    ) {
+      // Ensuring that email is not validated if they input the same email
+      if (email.trim() !== profile.email.trim()) {
+        setIsValidatingEmail(true);
+
+        _validateEmail(email, {
+          setIsEmailValid,
+          setEmailErrMsg,
+          setIsValidatingEmail,
+        });
+      }
+    } else {
+      setIsEmailValid(false);
     }
   };
 
   function addNumber(num) {
-    setPhoneNumber(num.trim());
+    setNumber(num.trim());
     if (
       num.trim().length >= 10 &&
       num.match(/^[+]*[(]{0,1}[0-9]{1,3}[)]{0,1}[-\s\./0-9]*$/g)
@@ -228,26 +258,44 @@ export default function Profile({showProfile}) {
     }
   }
 
-  const validateLocation = () => {
-    if (location.trim()) {
-      setLocationErrMsg('');
+  const validateAddress = () => {
+    if (address.trim()) {
+      setAddressErrMsg('');
     } else {
-      setIsLocationValid(false);
-      if (!location.trim()) {
-        setLocationErrMsg('Location is required');
+      setIsAddressValid(false);
+      if (!address.trim()) {
+        setAddressErrMsg('Address is required');
+      }
+    }
+  };
+
+  const validateEmail = () => {
+    if (
+      email.trim() &&
+      email.match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      )
+    ) {
+      setEmailErrMsg('');
+    } else {
+      setIsEmailValid(false);
+      if (!email.trim()) {
+        setEmailErrMsg('Email is required');
+      } else {
+        setEmailErrMsg('Invalid Email');
       }
     }
   };
 
   function validateNumber() {
     if (
-      phoneNumber.trim().length >= 10 &&
-      phoneNumber.match(/^[+]*[(]{0,1}[0-9]{1,3}[)]{0,1}[-\s\./0-9]*$/g)
+      number.trim().length >= 10 &&
+      number.match(/^[+]*[(]{0,1}[0-9]{1,3}[)]{0,1}[-\s\./0-9]*$/g)
     ) {
       setNumberErrMsg('');
     } else {
       setIsNumberValid(false);
-      if (!phoneNumber.trim()) {
+      if (!number.trim()) {
         setNumberErrMsg('Phone Number is required');
       } else {
         setNumberErrMsg('Invalid Phone Number.');
@@ -260,11 +308,20 @@ export default function Profile({showProfile}) {
     setIsEditing(false);
     Keyboard.dismiss();
 
-    setTimeout(() => {
-      setIsUpdating(false);
-      setIsEditing(false);
-      hideContainer();
-    }, 1500);
+    _updateUser(
+      {
+        name,
+        address,
+        email,
+        number,
+      },
+      {
+        setIsUpdating,
+        setIsEditing,
+        hideContainer,
+        dispatch,
+      },
+    );
   }
 
   //Functions Below Render Components Conditionally
@@ -276,7 +333,7 @@ export default function Profile({showProfile}) {
           <Icon
             name="check"
             color="#22cc22"
-            size={Dimensions.get('screen').width / 20}
+            size={screenWidth / 20}
             style={{marginRight: 10}}
           />
         );
@@ -285,7 +342,7 @@ export default function Profile({showProfile}) {
           <Icon
             name="close"
             color="#b3001e"
-            size={Dimensions.get('screen').width / 20}
+            size={screenWidth / 20}
             style={{marginRight: 10}}
           />
         );
@@ -300,7 +357,7 @@ export default function Profile({showProfile}) {
       return (
         <TouchableOpacity
           onPress={
-            isNameValid && isLocationValid && isNumberValid
+            isNameValid && isAddressValid && isEmailValid && isNumberValid
               ? updateProfile
               : Keyboard.dismiss
           }>
@@ -308,7 +365,7 @@ export default function Profile({showProfile}) {
             style={{
               ...styles.signUp,
               color:
-                isNameValid && isLocationValid && isNumberValid
+                isNameValid && isAddressValid && isEmailValid && isNumberValid
                   ? Colors.secondary
                   : 'grey',
             }}>
@@ -348,7 +405,7 @@ export default function Profile({showProfile}) {
             <Image
               source={
                 profileImage == ''
-                  ? require('../images/default_profile_pic.png')
+                  ? require('../../assets/images/default_profile_pic.png')
                   : {uri: profileImage.uri}
               }
               style={styles.profileImage}
@@ -361,7 +418,7 @@ export default function Profile({showProfile}) {
                 name="camera-outline"
                 type="ionicon"
                 color={Colors.secondaryTransparent}
-                size={Dimensions.get('screen').width / 28}
+                size={screenWidth / 28}
               />
             </TouchableOpacity>
           </View>
@@ -377,7 +434,7 @@ export default function Profile({showProfile}) {
                 name="person-outline"
                 type="ionicon"
                 color={nameErrMsg ? '#b3001e' : Colors.secondary}
-                size={Dimensions.get('screen').width / 20}
+                size={screenWidth / 20}
               />
 
               <TextInput
@@ -390,7 +447,11 @@ export default function Profile({showProfile}) {
                 value={name}
                 style={styles.inputField}
                 returnKeyType="go"
-                onSubmitEditing={updateProfile}
+                onSubmitEditing={
+                  isNameValid && isAddressValid && isEmailValid && isNumberValid
+                    ? updateProfile
+                    : null
+                }
                 selectTextOnFocus
               />
 
@@ -401,40 +462,106 @@ export default function Profile({showProfile}) {
             ) : null}
           </View>
 
-          {/* Location */}
+          {/* Address */}
           <View style={styles.fieldContainer}>
             <View
               style={{
                 ...styles.inputFieldContainer,
-                borderBottomColor: locationErrMsg
-                  ? '#b3001e'
-                  : Colors.secondary,
+                borderBottomColor: addressErrMsg ? '#b3001e' : Colors.secondary,
               }}>
               <Icon
                 name="location-outline"
                 type="ionicon"
-                color={locationErrMsg ? '#b3001e' : Colors.secondary}
-                size={Dimensions.get('screen').width / 20}
+                color={addressErrMsg ? '#b3001e' : Colors.secondary}
+                size={screenWidth / 20}
               />
 
               <TextInput
-                placeholder="Location(lodge details, street, e.t.c)"
+                placeholder="Address(lodge details, street, e.t.c)"
                 placeholderTextColor="#ccc"
                 maxLength={150}
-                onChangeText={location => addLocation(location)}
+                onChangeText={address => addAddress(address)}
                 onFocus={() => setIsEditing(true)}
-                onBlur={validateLocation}
-                value={location}
+                onBlur={validateAddress}
+                value={address}
                 style={styles.inputField}
                 returnKeyType="go"
-                onSubmitEditing={updateProfile}
+                onSubmitEditing={
+                  isNameValid && isAddressValid && isEmailValid && isNumberValid
+                    ? updateProfile
+                    : null
+                }
                 selectTextOnFocus
               />
 
-              {renderValidationIcons(location, isLocationValid)}
+              {renderValidationIcons(address, isAddressValid)}
             </View>
-            {locationErrMsg ? (
-              <Text style={styles.errorMsg}>{locationErrMsg}</Text>
+            {addressErrMsg ? (
+              <Text style={styles.errorMsg}>{addressErrMsg}</Text>
+            ) : null}
+          </View>
+
+          {/* Email */}
+          <View style={styles.fieldContainer}>
+            <View
+              style={{
+                ...styles.inputFieldContainer,
+                borderBottomColor: emailErrMsg ? '#b3001e' : Colors.secondary,
+              }}>
+              <Icon
+                name="mail-outline"
+                type="ionicon"
+                color={emailErrMsg ? '#b3001e' : Colors.secondary}
+                size={screenWidth / 20}
+              />
+
+              <TextInput
+                placeholder="Email Address"
+                placeholderTextColor="#ccc"
+                maxLength={100}
+                onChangeText={email =>
+                  isValidatingEmail
+                    ? ToastAndroid.show(
+                        'Cannot edit value until validation is complete. Careful Next Time!',
+                        ToastAndroid.LONG,
+                      )
+                    : addEmail(email)
+                }
+                onFocus={() => setIsEditing(true)}
+                onBlur={validateEmail}
+                value={email}
+                style={styles.inputField}
+                returnKeyType="go"
+                onSubmitEditing={
+                  isNameValid && isAddressValid && isEmailValid && isNumberValid
+                    ? updateProfile
+                    : null
+                }
+                selectTextOnFocus
+              />
+
+              {isValidatingEmail ? (
+                <ActivityIndicator color={Colors.secondary} size="small" />
+              ) : email ? (
+                isEmailValid ? (
+                  <Icon
+                    name="check"
+                    color="#22cc22"
+                    size={screenWidth / 20}
+                    style={{marginRight: 10}}
+                  />
+                ) : (
+                  <Icon
+                    name="close"
+                    color="#b3001e"
+                    size={screenWidth / 20}
+                    style={{marginRight: 10}}
+                  />
+                )
+              ) : null}
+            </View>
+            {emailErrMsg ? (
+              <Text style={styles.errorMsg}>{emailErrMsg}</Text>
             ) : null}
           </View>
 
@@ -449,7 +576,7 @@ export default function Profile({showProfile}) {
                 name="call-outline"
                 type="ionicon"
                 color={numberErrMsg ? '#b3001e' : Colors.secondary}
-                size={Dimensions.get('screen').width / 20}
+                size={screenWidth / 20}
               />
               <TextInput
                 placeholder="Phone Number"
@@ -458,16 +585,20 @@ export default function Profile({showProfile}) {
                 onChangeText={num => addNumber(num)}
                 onFocus={() => setIsEditing(true)}
                 onBlur={validateNumber}
-                value={phoneNumber}
+                value={number}
                 style={styles.inputField}
                 returnKeyType="go"
                 keyboardType="number-pad"
                 textContentType="telephoneNumber"
-                onSubmitEditing={updateProfile}
+                onSubmitEditing={
+                  isNameValid && isAddressValid && isEmailValid && isNumberValid
+                    ? updateProfile
+                    : null
+                }
                 selectTextOnFocus
               />
 
-              {renderValidationIcons(phoneNumber, isNumberValid)}
+              {renderValidationIcons(number, isNumberValid)}
             </View>
             {numberErrMsg ? (
               <Text style={styles.errorMsg}>{numberErrMsg}</Text>

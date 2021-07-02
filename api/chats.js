@@ -1,13 +1,37 @@
-import firestore from '@react-native-firebase/firestore';
+import firestore, {firebase} from '@react-native-firebase/firestore';
 
-export const _createChat = uid => {
+function getTimestamp() {
+  let date = new Date();
+  let hour = date.getHours();
+  let minutes = date.getMinutes();
+
+  return `${hour}:${minutes}`;
+}
+
+export const _sendMsg = (chatID, id, msg, updateMsg) => {
+  let timestamp = getTimestamp();
+
   firestore()
     .collection('chats')
-    .add({
-      uid,
-      timestamp: firestore.FieldValue.serverTimestamp(),
+    .doc(chatID)
+    .update({
+      messages: firebase.firestore.FieldValue.arrayUnion({
+        id,
+        msg,
+        timestamp,
+        status: 'sent',
+        sender: 'user',
+      }),
     })
-    .then(snapshot => snapshot.get())
-    .then(chat => console.log(chat.data()))
-    .catch(err => console.log(err));
+    .then(snapshot => {
+      updateMsg({
+        id,
+        timestamp,
+        sender: 'user',
+        status: 'sent',
+      });
+    })
+    .catch(err => {
+      return;
+    });
 };

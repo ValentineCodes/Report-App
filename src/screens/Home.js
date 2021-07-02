@@ -14,8 +14,9 @@ import {
 import GetLocation from 'react-native-get-location';
 import MapView, {Marker} from 'react-native-maps';
 import {Icon} from 'react-native-elements';
+import {useDispatch} from 'react-redux';
 
-import {_sendReport} from '../../api/reports';
+import {_processReport} from '../../api/reports';
 
 import Header from '../components/Header';
 import ReportButton from '../components/ReportButton';
@@ -30,6 +31,7 @@ import {mapStyle} from '../styles/map';
 import {styles} from '../styles/home';
 
 //Function declarations to show and hide Contacts and Profile Screen
+
 //To be defined from the Contacts Screen Component
 let showContacts;
 let hideContacts;
@@ -46,13 +48,23 @@ export default function Home() {
     latitude: null,
     longitude: null,
   });
+
   const _map = useRef(null);
+
+  const dispatch = useDispatch();
 
   const initialRegion = {
     latitude: 6.39067,
     longitude: 6.94409,
     latitudeDelta: 0.5,
     longitudeDelta: 0.5,
+  };
+
+  const dispatchChatID = chatID => {
+    dispatch({
+      type: 'addChatID',
+      payload: chatID,
+    });
   };
 
   const getLocation = () => {
@@ -65,10 +77,13 @@ export default function Home() {
           latitude: location.latitude,
           longitude: location.longitude,
         });
-        _sendReport('uyegfqoieyr', {
-          lat: location.latitude,
-          long: location.longitude,
-        });
+        _processReport(
+          {
+            lat: location.latitude,
+            long: location.longitude,
+          },
+          dispatchChatID,
+        );
         if (_map.current) {
           _map.current.animateCamera(
             {
@@ -137,6 +152,7 @@ export default function Home() {
       ToastAndroid.show('Getting Location...', ToastAndroid.LONG);
     } else {
       ToastAndroid.show('Updating Location...', ToastAndroid.LONG);
+      // Animate to my location
       if (_map.current) {
         _map.current.animateCamera(
           {
@@ -151,6 +167,7 @@ export default function Home() {
       }
     }
 
+    // Get my current location
     GetLocation.getCurrentPosition({
       enableHighAccuracy: true,
       timeout: 30000,
@@ -196,7 +213,7 @@ export default function Home() {
       return (
         <Marker coordinate={userLocation} title="Valentine Orga">
           <Image
-            source={require('../images/image.jpg')}
+            source={require('../../assets/images/image.jpg')}
             style={styles.marker}
           />
         </Marker>

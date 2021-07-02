@@ -27,41 +27,34 @@ export default function Contacts({onRender, setIsContactsVisible}) {
   const [viewImage, setViewImage] = useState(false);
 
   const screenWidth = Dimensions.get('screen').width;
+  const screenHeight = Dimensions.get('screen').height;
 
-  const size = useSharedValue(0);
-  const radius = useSharedValue(100);
+  const containerPos = useSharedValue(screenHeight);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      width: `${size.value}%`,
-      height: `${size.value}%`,
-      borderTopLeftRadius: radius.value,
-      borderBottomLeftRadius: radius.value,
+      transform: [{translateY: containerPos.value}],
     };
   });
 
   const showContacts = () => {
-    size.value = withTiming(100, {
-      duration: 500,
-    });
-
-    radius.value = withTiming(0, {
+    containerPos.value = withTiming(0, {
       duration: 500,
     });
     setTimeout(() => setIsContactsVisible(true), 400);
   };
 
   const hideContacts = () => {
-    size.value = withTiming(0, {
-      duration: 500,
-    });
-
-    radius.value = withTiming(100, {
+    containerPos.value = withTiming(screenHeight, {
       duration: 500,
     });
 
     setTimeout(() => setIsContactsVisible(false), 400);
   };
+
+  useEffect(() => {
+    onRender(showContacts, hideContacts);
+  }, []);
 
   const renderContactImage = () => {
     if (viewImage) {
@@ -84,10 +77,6 @@ export default function Contacts({onRender, setIsContactsVisible}) {
     }
   };
 
-  useEffect(() => {
-    onRender(showContacts, hideContacts);
-  }, []);
-
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
       {/* Header */}
@@ -98,8 +87,7 @@ export default function Contacts({onRender, setIsContactsVisible}) {
             type="ionicon"
             color={Colors.secondary}
             reverseColor="white"
-            size={screenWidth / 10}
-            style={{transform: [{rotateZ: '-25deg'}]}}
+            size={screenWidth / 13}
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Emergency Contacts</Text>
